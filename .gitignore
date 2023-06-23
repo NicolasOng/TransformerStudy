@@ -2,3 +2,5 @@
 tinyshakespeare.txt
 /data
 TransformerStudy.code-workspace
+model_state.pth
+__pycache__

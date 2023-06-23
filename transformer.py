@@ -122,7 +122,7 @@ class MultiHeadAttention(nn.Module):
     def forward(self, Q, K, V):
         h_outs = []
         for i, h in enumerate(self.heads):
-            h_outs.append(h(self.WQ[i](Q), self.WK[i](K), self.WV[i](V)))
+            h_outs.append(h(self.WQs[i](Q), self.WKs[i](K), self.WVs[i](V)))
         out = torch.cat(h_outs, dim=-1)
         out = self.dropout(self.WO(out))
         return out
