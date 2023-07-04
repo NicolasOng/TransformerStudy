@@ -37,7 +37,7 @@ class TokenEmbedding(nn.Module):
         # x: (batch, seq_len)
         # output: (batch, seq_len, d_model)
         _, seq_len = x.shape
-        return self.token_embeddings(x) + positional_encoding(seq_len, self.d_model)
+        return self.token_embeddings(x) + positional_encoding(seq_len, self.d_model).to(x.device)
     
 
 # Scaled Dot-Product Attention
