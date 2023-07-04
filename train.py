@@ -3,6 +3,8 @@ import argparse
 import torch
 from torch.nn import functional as F
 
+import pandas as pd
+
 from tqdm import tqdm
 
 from transformer import DecoderOnlyTransformer
@@ -50,6 +52,8 @@ print(sum(p.numel() for p in model.parameters())/1e6, 'M parameters in the model
 learning_rate = 1e-3
 optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate)
 
+train_loss = pd.DataFrame(columns=['Iteration', 'Train Loss', 'Validation Loss'])
+
 max_iters = 5000
 eval_interval = 500
 for iter in tqdm(range(max_iters)):
@@ -58,7 +62,8 @@ for iter in tqdm(range(max_iters)):
     if iter % eval_interval == 0 or iter == max_iters - 1:
         losses = estimate_loss(model, eval_iters, get_batch)
         print(f"step {iter}: train loss {losses['train']:.4f}, val loss {losses['val']:.4f}")
-        torch.save(model.state_dict(), 'model_state_' + model_size + "_" + str(iter) + '.pth')
+        train_loss = train_loss.append({'Iteration': iter, 'Train Loss': losses['train'], 'Validation Loss': losses['val']}, ignore_index=True)
+        torch.save(model.state_dict(), f'model_{model_size}_{dataset}_{iter}.pth')
 
     # sample a batch of data
     xb, yb = get_batch('train')
@@ -68,6 +73,8 @@ for iter in tqdm(range(max_iters)):
     optimizer.zero_grad(set_to_none=True)
     loss.backward()
     optimizer.step()
+
+train_loss.to_csv(f'model_{model_size}_{dataset}_loss.csv', index=False)
 
 # generate from the model
 context = torch.zeros((1, 1), dtype=torch.long, device=device)
