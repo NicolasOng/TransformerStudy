@@ -79,7 +79,7 @@ train_loss.to_csv(f'model_{model_size}_{dataset}_loss.csv', index=False)
 # generate from the model
 context = torch.zeros((1, 1), dtype=torch.long, device=device)
 model.eval()
-print(decode(generate(model, context, max_new_tokens=2000)[0].tolist()))
+print(decode(generate(model, context, 2000, block_size)[0].tolist()))
 
 #torch.save(model.state_dict(), 'model_state.pth')
 #model.load_state_dict(torch.load('model_state.pth'))
