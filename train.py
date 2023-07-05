@@ -15,7 +15,7 @@ device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 batch_size = 64
 block_size = 512
-eval_iters = 256
+eval_iters = 128
 
 parser = argparse.ArgumentParser(description="This file trains a transformer model and produces sample output.")
 parser.add_argument('-ms', type=str, default="tiny", help='Model Size')
@@ -45,6 +45,7 @@ elif (model_size == "big"):
     model = DecoderOnlyTransformer(vocab_size, block_size, 1024, 6, 16, 0.3)
 
 model = model.to(device)
+model.train()
 
 print(sum(p.numel() for p in model.parameters())/1e6, 'M parameters in the model.')
 
@@ -52,7 +53,7 @@ print(sum(p.numel() for p in model.parameters())/1e6, 'M parameters in the model
 learning_rate = 1e-3
 optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate)
 
-train_loss = pd.DataFrame(columns=['Iteration', 'Train Loss', 'Validation Loss'])
+train_loss_list = []# = pd.DataFrame(columns=['Iteration', 'Train Loss', 'Validation Loss'])
 
 max_iters = 5000
 eval_interval = 500
@@ -62,7 +63,7 @@ for iter in tqdm(range(max_iters)):
     if iter % eval_interval == 0 or iter == max_iters - 1:
         losses = estimate_loss(model, eval_iters, get_batch)
         print(f"step {iter}: train loss {losses['train']:.4f}, val loss {losses['val']:.4f}")
-        train_loss = train_loss.append({'Iteration': iter, 'Train Loss': losses['train'], 'Validation Loss': losses['val']}, ignore_index=True)
+        train_loss_list.append({'Iteration': iter, 'Train Loss': losses['train'], 'Validation Loss': losses['val']})
         torch.save(model.state_dict(), f'model_{model_size}_{dataset}_{iter}.pth')
 
     # sample a batch of data
@@ -74,6 +75,7 @@ for iter in tqdm(range(max_iters)):
     loss.backward()
     optimizer.step()
 
+train_loss = pd.DataFrame(train_loss_list)
 train_loss.to_csv(f'model_{model_size}_{dataset}_loss.csv', index=False)
 
 # generate from the model
